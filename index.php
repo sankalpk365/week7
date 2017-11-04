@@ -1,83 +1,46 @@
 <?php
-
-//echo "<table style='border: solid 1px black;'>";
-//echo
-//"<tr><th>Id</th><th>Email</th><th>Firstname</th><th>Lastname</th><th>Phone</th><th>Birthday</th><th>Gender</th><th>Password</th></tr>";
-
-class TableRows extends RecursiveIteratorIterator { 
-    function __construct($it) { 
-            parent::__construct($it, self::LEAVES_ONLY); 
-	        }
-
-    function current() {
-	    return "<td style='width:100px;border:1px solid black;'>" . parent::current(). "</td>";
-	    }
-
-    function beginChildren() { 
-	    echo "<tr>"; 
-	    } 
-
-    function endChildren() { 
-	    echo "</tr>" . "\n";
-	    } 
-}
-
-$servername = "sql2.njit.edu";
+$hostname = "sql2.njit.edu";
 $username = "sk2545";
 $password = "gkMQzyEKO";
-$dbname = "sk2545";
-
-try {
-    	$conn = new PDO("mysql:host=$servername;dbname=sk2545", $username, $password);
-    	$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    	echo "<b>Connected successfully</b>"."<br>"; 
-    	}
+$conn = NULL;
+try 
+{
+    $conn = new PDO("mysql:host=$hostname;dbname=sk2545",$username, $password);
+	echo "<b>Connected successfully</b>"."<br>";
+	}
 	catch(PDOException $e)
 	{
-	  echo "Connection failed: " . $e->getMessage()."<br>";
+	http_error("500 Internal Server Error\n\n"."There was a SQL error:\n\n" . $e->getMessage());
 	}
-echo "<br>";
-
-
-echo "<table style='border: solid 1px black;'>";
-echo
-"<tr><th>Id</th><th>Email</th><th>Firstname</th><th>Lastname</th><th>Phone</th><th>Birthday</th><th>Gender</th><th>Password</th></tr>";
-
-
-try {
-    	$conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-	$stmt = $conn->prepare("SELECT * FROM accounts where id<6"); 
-	$stmt->execute();
-
-	$result = $stmt->setFetchMode(PDO::FETCH_ASSOC); 
-	foreach(new TableRows(new RecursiveArrayIterator($stmt->fetchAll())) as $k=>$v) { 
-		echo $v;
-		}	       
+echo"<br>";
+						  
+function runQuery($query) {
+	global $conn;
+	    try {
+   		$q = $conn->prepare($query);
+		$q->execute();
+		$results = $q->fetchAll();
+		$q->closeCursor();
+		return $results;	
+		} catch (PDOException $e) {
+		http_error("500 Internal Server Error\n\n"."There was a SQL error:\n\n" .$e->getMessage());
+		}	  
 	}
-	
-	catch(PDOException $e) {
-	echo "Error: " . $e->getMessage();
+
+$sql = "select * from accounts where id<6 ";
+$results = runQuery($sql);
+if(count($results) > 0)
+{
+	echo "<table border=\"1\"><tr><th>Id</th><th>Email</th><th>Firstname</th><th>Lastname</th><th>Phone</th><th>Birthday</th><th>Gender</th><th>Password</th></tr>";
+	foreach ($results as $row) {
+	echo
+	"<br>".$row["id"].$row["email"].$row["fname"].$row["lname"].$row["phone"].$row["birthday"].$row["gender"].$row["password"]."<br>";
+		
+	echo "<br>"."<tr><td>".$row["id"]."</td><td>".$row["email"]."</td><td>".$row["fname"]."</td><td>".$row["lname"]."</td><td>".$row["phone"]."</td><td>".$row["birthday"]."</td><td>".$row["gender"]."</td><td>".$row["password"]."</td></tr>";
 	}
-	
-	
-	echo "</table>";
+	}
+	else{
+	echo '0 results';
+	}
 
-
-echo $stmt;
-
-
-?>
-
-
-
-
-
-
-
-
-
-
-
-
-
+?>	
